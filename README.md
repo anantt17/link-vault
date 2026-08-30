@@ -1,29 +1,40 @@
-# 🔒 Vault — Private Cloud Link Archive
+# vault
 
-A private, beautiful, mobile-first bookmark vault with instant Supabase cross-device cloud sync and optional Master PIN protection.
+a private bookmark manager that works on your phone and desktop. built this because i was tired of losing links across devices.
 
----
+no backend to manage. just a single html file + free supabase for sync.
 
-## 🚀 Quick Start (Local)
-
-You can run this immediately without deploying anywhere:
-1. Double-click `index.html` or open it in any web browser.
-2. It works out-of-the-box in **Local Mode** (saved in browser storage).
-3. Connect your free Supabase database whenever you are ready for cross-device phone sync.
+![vault screenshot](screenshot.png)
 
 ---
 
-## ☁️ Cross-Device Phone Sync Setup (2 Minutes, Free)
+## what it does
 
-To sync links between your PC and your phone:
+- save links from any source — twitter, github, youtube, reddit, articles, whatever
+- **real-time sync** across all your devices (add on phone, see it on pc instantly)
+- filter by source, folder, or tags
+- bulk import — paste raw text and it extracts all urls
+- optional **PIN lock** so nobody else can open it on your phone
+- works offline, installs as a PWA on your home screen
 
-### Step 1: Create a Free Supabase Project
-1. Go to [supabase.com](https://supabase.com) and create a free account (no credit card required).
-2. Click **New Project** and give it a name (e.g. `my-vault`).
+---
 
-### Step 2: Create the `links` Table
-1. In your Supabase Dashboard, click on **SQL Editor** in the left sidebar.
-2. Paste the following SQL script and click **Run**:
+## stack
+
+just html, css, and vanilla js. no frameworks. supabase for the database + real-time.
+runs as a static file so hosting is free forever.
+
+---
+
+## setup
+
+### 1. get it running locally
+just open `index.html` in your browser. works immediately in local mode (no signup needed).
+
+### 2. add cloud sync (optional but recommended)
+you need a free [supabase](https://supabase.com) account. no credit card.
+
+create a project, then run this in the SQL editor:
 
 ```sql
 create table if not exists public.links (
@@ -38,53 +49,32 @@ create table if not exists public.links (
   updated_at timestamp with time zone default timezone('utc'::text, now())
 );
 
--- Enable Row Level Security and allow access with your anon key:
 alter table public.links enable row level security;
 create policy "Allow access" on public.links for all using (true) with check (true);
 ```
 
-### Step 3: Connect in Vault Settings
-1. In Supabase, go to **Project Settings** (gear icon) -> **API**.
-2. Copy your **Project URL** and **anon (public)** key.
-3. Open Vault, click **⚙️ Settings**, paste both into the fields, and click **Connect & Sync**.
-4. That's it! Your links will now automatically sync across any device you open Vault on.
+then go to **Database → Publications → supabase_realtime** and toggle on the `links` table.
+
+then in vault, open **Settings**, paste your supabase project URL + anon key, hit connect.
+
+### 3. deploy so you can open it on your phone
+push this repo to github, then deploy on [vercel](https://vercel.com) or [cloudflare pages](https://pages.cloudflare.com) — both are free. you get an https url in about 20 seconds.
+
+open that url on your phone → tap share → **Add to Home Screen** → done.
 
 ---
 
-## 📱 Hosting & Accessing from your Phone ($0 Forever)
+## pin lock
 
-To access it on your phone anytime on 5G or Wi-Fi:
-
-### Recommended: Vercel or Cloudflare Pages (Free)
-1. Push this folder to a **private GitHub repository**:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   ```
-2. Go to [vercel.com](https://vercel.com) or [pages.cloudflare.com](https://pages.cloudflare.com).
-3. Import your private repository.
-4. Click **Deploy**. In 20 seconds, you get an automated HTTPS URL (e.g. `https://vault-anant.vercel.app`).
-5. Open that URL on your phone!
+go to settings, set a 4-digit pin. vault locks itself and shows a keypad when you reopen it.
 
 ---
 
-## 📲 Install as an App on Phone (PWA)
+## your data
 
-### On iPhone (Safari):
-1. Open your Vault URL in **Safari**.
-2. Tap the **Share button** (the square with the arrow pointing up).
-3. Scroll down and tap **Add to Home Screen**.
-4. Vault will appear on your phone home screen with its custom gold vault icon and launch full-screen without any browser bars!
-
-### On Android (Chrome):
-1. Open your Vault URL in **Chrome**.
-2. Tap the **three dots (⋮)** menu in the top right.
-3. Tap **Add to Home screen** or **Install app**.
+your supabase credentials never touch any server other than supabase's. the app is just a static html file. you own everything.
 
 ---
 
-## 🔒 Master PIN Protection
+made as a side project because browser bookmarks are a mess
 
-- In Vault, open **⚙️ Settings** and set a 4-to-6 digit PIN.
-- Your vault will automatically lock, requiring your PIN to view or add links.
