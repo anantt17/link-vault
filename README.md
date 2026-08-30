@@ -4,7 +4,7 @@ a private bookmark manager that works on your phone and desktop. built this beca
 
 no backend to manage. just a single html file + free supabase for sync.
 
-![vault screenshot](screenshot.png)
+
 
 ---
 
