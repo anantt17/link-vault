@@ -759,6 +759,7 @@ let editingId = null;
 
 // Supabase client instance
 let supaClient = null;
+let realtimeChannel = null;
 let syncStatus = 'local'; // 'local', 'syncing', 'online', 'error'
 
 // App Configuration (Supabase + PIN)
@@ -872,6 +873,7 @@ function initSupabase(){
     if(window.supabase && appConfig.supaUrl && appConfig.supaKey){
       supaClient = window.supabase.createClient(appConfig.supaUrl, appConfig.supaKey);
       syncNow();
+      subscribeRealtime();
     } else {
       updateSyncStatus('local');
     }
@@ -879,6 +881,57 @@ function initSupabase(){
     console.error('Supabase init failed', err);
     updateSyncStatus('error');
   }
+}
+
+function subscribeRealtime(){
+  if(!supaClient) return;
+  // Unsubscribe any existing channel first
+  if(realtimeChannel){
+    supaClient.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+
+  realtimeChannel = supaClient
+    .channel('links-realtime')
+    .on('postgres_changes', {
+      event: '*',       // INSERT, UPDATE, DELETE
+      schema: 'public',
+      table: 'links'
+    }, (payload) => {
+      const { eventType, new: newRecord, old: oldRecord } = payload;
+
+      if(eventType === 'INSERT' || eventType === 'UPDATE'){
+        const incoming = {
+          id: newRecord.id,
+          url: newRecord.url,
+          title: newRecord.title || '',
+          folder: newRecord.folder || 'Unsorted',
+          tags: Array.isArray(newRecord.tags) ? newRecord.tags : [],
+          notes: newRecord.notes || '',
+          source: newRecord.source || detectSource(newRecord.url),
+          added: Number(newRecord.added) || Date.now()
+        };
+        const idx = links.findIndex(l => l.id === incoming.id);
+        if(idx !== -1){
+          links[idx] = incoming; // Update existing
+        } else {
+          links.unshift(incoming); // Add new at top
+        }
+      } else if(eventType === 'DELETE'){
+        links = links.filter(l => l.id !== oldRecord.id);
+      }
+
+      saveLinksLocally();
+      render();
+      updateSyncStatus('online');
+    })
+    .subscribe((status) => {
+      if(status === 'SUBSCRIBED'){
+        updateSyncStatus('online');
+      } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
+        updateSyncStatus('error');
+      }
+    });
 }
 
 async function syncNow(){
@@ -1010,6 +1063,11 @@ function saveAndConnectCloud(){
 
 function disconnectCloud(){
   if(confirm('Disconnect cloud sync? Your local links will remain intact.')){
+    // Unsubscribe realtime channel
+    if(realtimeChannel && supaClient){
+      supaClient.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
     appConfig.supaUrl = '';
     appConfig.supaKey = '';
     saveConfig();
