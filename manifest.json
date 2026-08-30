@@ -1,0 +1,19 @@
+{
+  "name": "Vault — Private Link Archive",
+  "short_name": "Vault",
+  "description": "Fast, private, cloud-synced bookmark vault for mobile and desktop.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#12110e",
+  "theme_color": "#12110e",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

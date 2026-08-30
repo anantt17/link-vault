@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Vault — Private Link Archive</title>
+<meta name="description" content="Fast, private, cloud-synced bookmark vault designed for desktop and mobile.">
+<meta name="theme-color" content="#12110e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vault">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23141310' stroke='%23c9a227' stroke-width='7'/><path d='M32 36C32 26 40 18 50 18C60 18 68 26 68 36V45H32V36Z' fill='none' stroke='%23c9a227' stroke-width='8'/><rect x='22' y='44' width='56' height='42' rx='10' fill='%23c9a227'/><circle cx='50' cy='61' r='6.5' fill='%23141310'/><path d='M50 67.5V75.5' stroke='%23141310' stroke-width='5.5' stroke-linecap='round'/></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23141310' stroke='%23c9a227' stroke-width='7'/><path d='M32 36C32 26 40 18 50 18C60 18 68 26 68 36V45H32V36Z' fill='none' stroke='%23c9a227' stroke-width='8'/><rect x='22' y='44' width='56' height='42' rx='10' fill='%23c9a227'/><circle cx='50' cy='61' r='6.5' fill='%23141310'/><path d='M50 67.5V75.5' stroke='%23141310' stroke-width='5.5' stroke-linecap='round'/></svg>">
+
+<!-- Supabase CDN Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg0:#12110e;
+    --bg1:#191814;
+    --bg2:#22201a;
+    --bg3:#2d2922;
+    --line:#2e2a22;
+    --line-strong:#443e33;
+    --ink:#ece7db;
+    --ink-dim:#9c9585;
+    --ink-faint:#6b6456;
+    --stamp:#c9a227;
+    --stamp-hover:#deb32d;
+    --stamp-ink:#1a1403;
+    --tw:#5b8fd6; --tw-ink:#0d1f38;
+    --ig:#d1608f; --ig-ink:#3a0f1f;
+    --gh:#8f7fd6; --gh-ink:#1c1638;
+    --yt:#ef4444; --yt-ink:#3b0707;
+    --li:#0284c7; --li-ink:#032b45;
+    --rd:#f97316; --rd-ink:#3b1000;
+    --code:#38bdf8; --code-ink:#032b45;
+    --blog:#34d399; --blog-ink:#064e3b;
+    --doc:#fbbf24; --doc-ink:#453003;
+    --web:#7a9c8e; --web-ink:#12241d;
+    --danger:#e05252;
+    --success:#10b981;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  
+  body{
+    margin:0; background:var(--bg0); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:14.5px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:0;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::selection{background:var(--stamp); color:var(--stamp-ink);}
+
+  .shell{display:grid; grid-template-columns:260px 1fr; min-height:100vh;}
+
+  /* --- DESKTOP SIDEBAR --- */
+  .sidebar{
+    background:var(--bg1); border-right:1px solid var(--line);
+    padding:28px 22px; position:sticky; top:0; height:100vh; overflow-y:auto;
+    display:flex; flex-direction:column; z-index:10;
+  }
+  .brand-wrap{display:flex; align-items:center; gap:12px; margin-bottom:28px; padding-bottom:18px; border-bottom:1px solid var(--line);}
+  .brand-logo{width:40px; height:40px; flex-shrink:0;}
+  .brand{font-family:'JetBrains Mono',monospace; font-weight:800; font-size:20px; letter-spacing:1px; color:var(--stamp); line-height:1;}
+  .brand-sub{font-size:11px; color:var(--ink-dim); letter-spacing:0.4px; margin-top:4px;}
+
+  .sec-label{font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--ink-faint); margin:24px 0 10px; font-family:'JetBrains Mono',monospace; font-weight:700;}
+  
+  .filter-item{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 12px; border-radius:10px; cursor:pointer; font-size:14px; color:var(--ink-dim);
+    margin-bottom:4px; transition:all 0.15s ease;
+  }
+  .filter-item:hover{background:var(--bg2); color:var(--ink);}
+  .filter-item.active{background:var(--bg2); color:var(--stamp); font-weight:600; border-left:3px solid var(--stamp); padding-left:11px;}
+  .filter-item .cnt{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); background:var(--bg0); padding:2px 8px; border-radius:12px;}
+
+  .tag-cloud{display:flex; flex-wrap:wrap; gap:8px;}
+  .tag-chip{
+    font-size:12px; padding:5px 12px; border-radius:20px; border:1px solid var(--line-strong);
+    color:var(--ink-dim); cursor:pointer; font-family:'JetBrains Mono',monospace; transition:all 0.15s ease; background:var(--bg2);
+  }
+  .tag-chip:hover, .tag-chip.active{background:var(--stamp); color:var(--stamp-ink); border-color:var(--stamp); font-weight:600;}
+
+  .sidebar-bottom{margin-top:auto; padding-top:20px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:10px;}
+  .clear-filters-btn{
+    width:100%; padding:10px 14px; font-size:12px; font-family:'JetBrains Mono',monospace;
+    background:rgba(201,162,39,0.1); border:1px solid var(--stamp); color:var(--stamp);
+    border-radius:10px; cursor:pointer; text-align:center; transition:all 0.15s ease; font-weight:600;
+  }
+  .clear-filters-btn:hover{background:var(--stamp); color:var(--stamp-ink);}
+
+  /* --- MAIN CONTENT --- */
+  .main{padding:32px 40px 60px; max-width:1250px; margin:0 auto; width:100%;}
+  
+  /* Topbar */
+  .topbar{display:flex; gap:14px; align-items:center; margin-bottom:24px; flex-wrap:wrap;}
+  
+  .mobile-brand-row{display:none; align-items:center; justify-content:space-between; width:100%; padding-bottom:12px; border-bottom:1px solid var(--line);}
+  .mobile-brand{display:flex; align-items:center; gap:10px;}
+  .mobile-brand-title{font-family:'JetBrains Mono',monospace; font-weight:800; font-size:18px; color:var(--stamp);}
+  
+  .search-wrap{flex:1; position:relative; min-width:260px;}
+  .search{
+    width:100%; background:var(--bg1); border:1px solid var(--line);
+    border-radius:12px; padding:12px 16px 12px 42px; color:var(--ink); font-size:15px;
+    transition:all 0.15s ease;
+  }
+  .search:focus{outline:none; border-color:var(--stamp); background:var(--bg2);}
+  .search::placeholder{color:var(--ink-faint);}
+  .search-icon{position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:15px; pointer-events:none;}
+  .search-clear{position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:14px; cursor:pointer; display:none; padding:4px;}
+  .search-shortcut{position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--ink-faint); border:1px solid var(--line-strong); padding:2px 6px; border-radius:5px; pointer-events:none;}
+
+  .action-group{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  
+  /* Buttons */
+  .btn{
+    background:var(--bg1); border:1px solid var(--line-strong); color:var(--ink);
+    padding:10px 16px; border-radius:12px; font-size:13.5px; cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:500; display:inline-flex; align-items:center; gap:7px;
+    transition:all 0.15s ease; white-space:nowrap; min-height:42px;
+  }
+  .btn:hover{border-color:var(--stamp); color:var(--stamp); background:var(--bg2);}
+  .btn.primary{background:var(--stamp); color:var(--stamp-ink); border-color:var(--stamp); font-weight:700;}
+  .btn.primary:hover{background:var(--stamp-hover); color:var(--stamp-ink);}
+  .btn:active{transform:scale(0.97);}
+
+  /* Sync Indicator Pill */
+  .sync-badge{
+    display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:600; cursor:pointer;
+    background:var(--bg2); border:1px solid var(--line-strong); transition:all 0.2s;
+  }
+  .sync-badge:hover{border-color:var(--stamp);}
+  .sync-dot{width:8px; height:8px; border-radius:50%; display:inline-block;}
+  .sync-dot.online{background:var(--success); box-shadow:0 0 8px rgba(16,185,129,0.5);}
+  .sync-dot.syncing{background:var(--stamp); animation:pulse 1s infinite;}
+  .sync-dot.local{background:var(--ink-faint);}
+  .sync-dot.error{background:var(--danger);}
+
+  @keyframes pulse{
+    0%,100%{opacity:1; transform:scale(1);}
+    50%{opacity:0.4; transform:scale(1.2);}
+  }
+
+  .header-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--line);}
+  .header-title{font-size:22px; font-weight:700; color:var(--ink);}
+  .stat-badge{font-size:13px; color:var(--ink-dim); font-family:'JetBrains Mono',monospace;}
+
+  /* --- GRID & CARDS --- */
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:20px;}
+
+  .card{
+    background:var(--bg1); border:1px solid var(--line); border-radius:16px;
+    padding:20px 22px; position:relative; overflow:hidden; display:flex; flex-direction:column;
+    transition:all 0.2s ease; box-shadow:0 4px 16px rgba(0,0,0,0.2);
+  }
+  .card:hover{border-color:var(--stamp); transform:translateY(-2px); box-shadow:0 10px 26px rgba(0,0,0,0.35);}
+  
+  .card-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .badge{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
+    padding:5px 9px; border-radius:6px; letter-spacing:0.5px; text-transform:uppercase;
+  }
+  .badge.tw{background:var(--tw); color:var(--tw-ink);}
+  .badge.ig{background:var(--ig); color:var(--ig-ink);}
+  .badge.gh{background:var(--gh); color:var(--gh-ink);}
+  .badge.yt{background:var(--yt); color:var(--yt-ink);}
+  .badge.li{background:var(--li); color:var(--li-ink);}
+  .badge.rd{background:var(--rd); color:var(--rd-ink);}
+  .badge.code{background:var(--code); color:var(--code-ink);}
+  .badge.blog{background:var(--blog); color:var(--blog-ink);}
+  .badge.doc{background:var(--doc); color:var(--doc-ink);}
+  .badge.web{background:var(--web); color:var(--web-ink);}
+
+  .card-actions{display:flex; gap:6px; align-items:center;}
+  .icon-btn{
+    background:var(--bg2); border:1px solid var(--line-strong); color:var(--ink-dim); cursor:pointer; font-size:12px;
+    padding:6px 10px; border-radius:8px; font-family:'JetBrains Mono',monospace;
+    transition:all 0.15s ease; display:inline-flex; align-items:center; gap:4px; font-weight:500; min-height:32px;
+  }
+  .icon-btn:hover{color:var(--ink); border-color:var(--stamp); background:var(--bg0);}
+  .icon-btn.copied{color:var(--stamp); border-color:var(--stamp); background:rgba(201,162,39,0.15);}
+  .icon-btn.del:hover{color:var(--danger); border-color:rgba(224,82,82,0.4); background:rgba(224,82,82,0.08);}
+
+  .card-title-wrap{display:flex; align-items:center; gap:10px; margin-top:4px; margin-bottom:8px;}
+  .favicon{width:20px; height:20px; border-radius:4px; flex-shrink:0;}
+  .card-title{font-size:16px; font-weight:600; margin:0; word-break:break-word; line-height:1.4; color:var(--ink);}
+  
+  .card-url-wrap{margin-bottom:12px;}
+  .card-url{
+    font-size:13px; color:var(--ink-dim); font-family:'JetBrains Mono',monospace;
+    text-decoration:none; display:inline-block; max-width:100%; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; transition:color 0.15s ease;
+  }
+  .card-url:hover{color:var(--stamp); text-decoration:underline;}
+
+  .card-notes{
+    font-size:13px; color:#c5bdad; margin-bottom:14px; background:var(--bg2);
+    padding:10px 14px; border-radius:10px; border-left:3.5px solid var(--stamp); line-height:1.5;
+  }
+
+  .card-meta{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:auto; padding-top:12px; border-top:1px dashed var(--line);}
+  .pill{
+    font-size:11.5px; padding:3px 9px; border-radius:8px; border:1px solid var(--line-strong);
+    color:var(--ink-dim); font-family:'JetBrains Mono',monospace; background:var(--bg2);
+  }
+  .pill.folder{border-color:var(--stamp); color:var(--stamp); background:rgba(201,162,39,0.08); font-weight:600;}
+
+  .empty{text-align:center; padding:80px 20px; color:var(--ink-dim);}
+  .empty .big{font-size:32px; margin-bottom:12px; font-family:'JetBrains Mono',monospace; color:var(--ink-faint);}
+
+  /* --- MODALS & BOTTOM SHEETS --- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.78); display:none;
+    align-items:center; justify-content:center; z-index:100; padding:20px;
+    backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+  }
+  .overlay.show{display:flex;}
+  
+  .modal{
+    background:var(--bg1); border:1px solid var(--line-strong); border-radius:18px;
+    padding:26px 30px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto;
+    box-shadow:0 20px 48px rgba(0,0,0,0.75); position:relative;
+  }
+  .modal-handle{display:none; width:44px; height:5px; background:var(--line-strong); border-radius:10px; margin:0 auto 18px;}
+  .modal h3{margin:0 0 18px; font-size:18px; font-family:'JetBrains Mono',monospace; color:var(--ink); display:flex; align-items:center; justify-content:space-between;}
+  .modal-close-x{background:none; border:none; color:var(--ink-dim); font-size:20px; cursor:pointer; line-height:1;}
+  .modal-close-x:hover{color:var(--stamp);}
+  
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:11.5px; color:var(--ink-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.7px; font-weight:600;}
+  .field input, .field select, .field textarea{
+    width:100%; background:var(--bg2); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; color:var(--ink); font-size:16px; font-family:'Inter',sans-serif;
+  }
+  .field textarea{resize:vertical; min-height:85px; font-family:'JetBrains Mono',monospace; font-size:14px;}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--stamp); background:var(--bg3);}
+  .hint{font-size:12px; color:var(--ink-faint); margin-top:6px; line-height:1.4;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:24px;}
+  .err{color:var(--danger); font-size:12.5px; margin-top:6px; display:none;}
+  .err.show{display:block;}
+
+  /* --- MOBILE BOTTOM NAVIGATION --- */
+  .mobile-bottom-nav{
+    display:none; position:fixed; bottom:0; left:0; right:0;
+    background:rgba(25,24,20,0.96); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-top:1px solid var(--line); padding:6px 12px calc(8px + var(--safe-bottom));
+    z-index:90; justify-content:space-around; align-items:center;
+  }
+  .mobile-nav-item{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; color:var(--ink-dim); font-size:10px; font-family:'JetBrains Mono',monospace;
+    cursor:pointer; padding:6px 12px; border-radius:10px; transition:all 0.15s; position:relative;
+  }
+  .mobile-nav-item .icon{font-size:18px;}
+  .mobile-nav-item.active{color:var(--stamp); font-weight:700;}
+  .mobile-nav-item .nav-dot{
+    width:6px; height:6px; background:var(--stamp); border-radius:50%;
+    position:absolute; top:4px; right:12px; display:none;
+  }
+  .mobile-nav-item .nav-dot.show{display:block;}
+  .mobile-nav-item.fab{
+    background:var(--stamp); color:var(--stamp-ink); width:46px; height:46px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; padding:0; box-shadow:0 4px 14px rgba(201,162,39,0.4);
+    transform:translateY(-8px); font-size:22px; font-weight:700;
+  }
+  .mobile-nav-item.fab:active{transform:translateY(-6px) scale(0.95);}
+
+  /* --- MOBILE DRAWER (FILTERS SHEET) --- */
+  .mobile-drawer-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:95; display:none;
+    align-items:flex-end; backdrop-filter:blur(4px);
+  }
+  .mobile-drawer-overlay.show{display:flex;}
+  .mobile-drawer{
+    background:var(--bg1); border-top:1px solid var(--line-strong); border-radius:24px 24px 0 0;
+    width:100%; max-height:80vh; overflow-y:auto; padding:18px 24px calc(24px + var(--safe-bottom));
+    animation:slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes slideUp{
+    from{transform:translateY(100%);}
+    to{transform:translateY(0);}
+  }
+
+  /* --- PIN LOCK SCREEN --- */
+  .pin-overlay{
+    position:fixed; inset:0; background:var(--bg0); z-index:200; display:none;
+    flex-direction:column; align-items:center; justify-content:center; padding:24px;
+  }
+  .pin-overlay.show{display:flex;}
+  .pin-box{
+    background:var(--bg1); border:1px solid var(--line-strong); border-radius:24px;
+    padding:36px 28px; width:100%; max-width:360px; text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,0.7);
+  }
+  .pin-logo{width:56px; height:56px; margin:0 auto 16px;}
+  .pin-title{font-family:'JetBrains Mono',monospace; font-weight:800; font-size:20px; color:var(--stamp); margin-bottom:4px;}
+  .pin-subtitle{font-size:12.5px; color:var(--ink-dim); margin-bottom:24px;}
+  
+  .pin-dots{display:flex; justify-content:center; gap:14px; margin-bottom:28px;}
+  .pin-dot{
+    width:16px; height:16px; border-radius:50%; border:2px solid var(--line-strong);
+    transition:all 0.15s ease; background:transparent;
+  }
+  .pin-dot.filled{background:var(--stamp); border-color:var(--stamp); box-shadow:0 0 10px rgba(201,162,39,0.5);}
+
+  .pin-keypad{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:16px;}
+  .pin-key{
+    background:var(--bg2); border:1px solid var(--line); border-radius:16px;
+    color:var(--ink); font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:600;
+    height:58px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:all 0.15s;
+  }
+  .pin-key:active{background:var(--stamp); color:var(--stamp-ink); transform:scale(0.95);}
+  .pin-key.ghost{background:none; border-color:transparent; font-size:14px; color:var(--ink-dim);}
+  .pin-err{color:var(--danger); font-size:13px; font-family:'JetBrains Mono',monospace; min-height:20px; margin-bottom:10px;}
+  
+  .shake{animation:shakeAnim 0.35s ease;}
+  @keyframes shakeAnim{
+    0%,100%{transform:translateX(0);}
+    20%,60%{transform:translateX(-8px);}
+    40%,80%{transform:translateX(8px);}
+  }
+
+  /* --- SQL Code Box in Settings --- */
+  .code-box{
+    background:var(--bg0); border:1px solid var(--line); border-radius:10px;
+    padding:12px; font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    color:var(--ink-dim); overflow-x:auto; position:relative; margin-top:8px; line-height:1.5;
+  }
+  .code-box-copy{
+    position:absolute; right:8px; top:8px; background:var(--bg2); border:1px solid var(--line-strong);
+    color:var(--ink); font-size:11px; padding:3px 8px; border-radius:6px; cursor:pointer;
+  }
+  .code-box-copy:hover{border-color:var(--stamp); color:var(--stamp);}
+
+  /* --- RESPONSIVE MEDIA QUERIES --- */
+  @media (max-width:850px){
+    .shell{grid-template-columns:1fr; padding-bottom:calc(74px + var(--safe-bottom));}
+    .sidebar{display:none;}
+    .main{padding:18px 16px 40px;}
+    .mobile-brand-row{display:flex;}
+    .mobile-bottom-nav{display:flex;}
+    .search-shortcut{display:none;}
+    .topbar .action-group{display:none;} /* Hidden from topbar on mobile; accessible via bottom nav */
+    .topbar{margin-bottom:16px;}
+    .grid{grid-template-columns:1fr; gap:14px;}
+    .header-row{margin-bottom:14px; padding-bottom:10px;}
+    .header-title{font-size:19px;}
+    
+    /* Bottom sheet styling for modals on mobile */
+    .overlay{align-items:flex-end; padding:0;}
+    .modal{
+      border-radius:24px 24px 0 0; max-height:85vh; width:100%;
+      border-bottom:none; border-left:none; border-right:none;
+      padding:20px 20px calc(24px + var(--safe-bottom));
+      animation:slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-handle{display:block;}
+  }
+</style>
+</head>
+<body>
+
+<!-- PIN LOCK SCREEN (Optional) -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box" id="pinBox">
+    <svg class="pin-logo" viewBox="0 0 100 100">
+      <rect width="100" height="100" rx="24" fill="#141310" stroke="#c9a227" stroke-width="7"/>
+      <path d="M32 36C32 26 40 18 50 18C60 18 68 26 68 36V45H32V36Z" fill="none" stroke="#c9a227" stroke-width="8"/>
+      <rect x="22" y="44" width="56" height="42" rx="10" fill="#c9a227"/>
+      <circle cx="50" cy="61" r="6.5" fill="#141310"/>
+      <path d="M50 67.5V75.5" stroke="#141310" stroke-width="5.5" stroke-linecap="round"/>
+    </svg>
+    <div class="pin-title">VAULT LOCKED</div>
+    <div class="pin-subtitle">Enter your private Master PIN</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
+    <div class="pin-err" id="pinErr"></div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pressPin('1')">1</button>
+      <button class="pin-key" onclick="pressPin('2')">2</button>
+      <button class="pin-key" onclick="pressPin('3')">3</button>
+      <button class="pin-key" onclick="pressPin('4')">4</button>
+      <button class="pin-key" onclick="pressPin('5')">5</button>
+      <button class="pin-key" onclick="pressPin('6')">6</button>
+      <button class="pin-key" onclick="pressPin('7')">7</button>
+      <button class="pin-key" onclick="pressPin('8')">8</button>
+      <button class="pin-key" onclick="pressPin('9')">9</button>
+      <button class="pin-key ghost" onclick="clearPin()">Clear</button>
+      <button class="pin-key" onclick="pressPin('0')">0</button>
+      <button class="pin-key ghost" onclick="backspacePin()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <!-- DESKTOP SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand-wrap">
+      <svg class="brand-logo" viewBox="0 0 100 100">
+        <rect width="100" height="100" rx="24" fill="#141310" stroke="#c9a227" stroke-width="7"/>
+        <path d="M32 36C32 26 40 18 50 18C60 18 68 26 68 36V45H32V36Z" fill="none" stroke="#c9a227" stroke-width="8"/>
+        <rect x="22" y="44" width="56" height="42" rx="10" fill="#c9a227"/>
+        <circle cx="50" cy="61" r="6.5" fill="#141310"/>
+        <path d="M50 67.5V75.5" stroke="#141310" stroke-width="5.5" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="brand">VAULT</div>
+        <div class="brand-sub">cloud link archive</div>
+      </div>
+    </div>
+
+    <!-- Sync status button in desktop sidebar -->
+    <div style="margin-bottom:18px;">
+      <div class="sync-badge" id="desktopSyncBadge" onclick="openSettings()" title="Click to configure Cloud Sync">
+        <span class="sync-dot local" id="desktopSyncDot"></span>
+        <span id="desktopSyncText">Local Only</span>
+      </div>
+    </div>
+
+    <div class="sec-label">Source</div>
+    <div id="sourceFilters"></div>
+
+    <div class="sec-label">Folders</div>
+    <div id="folderFilters"></div>
+
+    <div class="sec-label">Tags</div>
+    <div class="tag-cloud" id="tagCloud"></div>
+
+    <div class="sidebar-bottom">
+      <div id="clearFiltersWrap" style="display:none;">
+        <button class="clear-filters-btn" id="clearFiltersBtn">⚡ Clear Active Filters</button>
+      </div>
+      <button class="btn" style="width:100%; justify-content:center;" onclick="openSettings()">⚙️ Settings & Sync</button>
+      <button class="btn" id="desktopLockBtn" style="width:100%; justify-content:center; display:none;" onclick="lockVault()">🔒 Lock Vault</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CANVAS -->
+  <main class="main">
+    <!-- Mobile Brand Header -->
+    <div class="mobile-brand-row">
+      <div class="mobile-brand">
+        <svg style="width:30px; height:30px;" viewBox="0 0 100 100">
+          <rect width="100" height="100" rx="24" fill="#141310" stroke="#c9a227" stroke-width="7"/>
+          <path d="M32 36C32 26 40 18 50 18C60 18 68 26 68 36V45H32V36Z" fill="none" stroke="#c9a227" stroke-width="8"/>
+          <rect x="22" y="44" width="56" height="42" rx="10" fill="#c9a227"/>
+          <circle cx="50" cy="61" r="6.5" fill="#141310"/>
+        </svg>
+        <span class="mobile-brand-title">VAULT</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="sync-badge" id="mobileSyncBadge" onclick="openSettings()">
+          <span class="sync-dot local" id="mobileSyncDot"></span>
+          <span id="mobileSyncText">Local</span>
+        </div>
+        <button class="icon-btn" id="mobileLockBtn" style="display:none; min-height:30px; padding:4px 8px;" onclick="lockVault()">🔒</button>
+      </div>
+    </div>
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search" id="searchBox" placeholder="Search title, url, tag, folder..." autocomplete="off">
+        <span class="search-clear" id="searchClear" onclick="clearSearch()">✕</span>
+        <span class="search-shortcut">/</span>
+      </div>
+      <div class="action-group">
+        <button class="btn" id="exportBtn" title="Export Backup JSON">Export 📤</button>
+        <label class="btn" title="Import Backup JSON" style="cursor:pointer;">Import 📥 <input type="file" id="importFile" accept=".json" style="display:none;"></label>
+        <button class="btn" id="bulkBtn">Bulk import</button>
+        <button class="btn primary" id="addBtn">+ Add link</button>
+      </div>
+    </div>
+
+    <!-- Header Stats -->
+    <div class="header-row">
+      <h2 class="header-title" id="dashboardTitle">All Archives</h2>
+      <div class="stat-badge" id="statRow"></div>
+    </div>
+
+    <!-- Cards Grid -->
+    <div class="grid" id="grid"></div>
+
+    <!-- Empty State -->
+    <div class="empty" id="emptyState" style="display:none">
+      <div class="big">— empty archive —</div>
+      <div>No saved links yet. Tap <strong>+</strong> or paste a batch.</div>
+    </div>
+  </main>
+</div>
+
+<!-- MOBILE BOTTOM NAVIGATION -->
+<nav class="mobile-bottom-nav">
+  <button class="mobile-nav-item active" id="navItemVault" onclick="goToVaultView()">
+    <span class="icon">🏠</span>
+    <span>Vault</span>
+  </button>
+  <button class="mobile-nav-item" id="navItemFilter" onclick="openMobileDrawer()">
+    <span class="icon">🏷️</span>
+    <span>Filter</span>
+    <span class="nav-dot" id="mobileFilterDot"></span>
+  </button>
+  <button class="mobile-nav-item fab" id="mobileFabAdd" onclick="openAdd()" title="Add link">
+    +
+  </button>
+  <button class="mobile-nav-item" id="navItemBulk" onclick="openBulk()">
+    <span class="icon">⚡</span>
+    <span>Bulk</span>
+  </button>
+  <button class="mobile-nav-item" id="navItemSettings" onclick="openSettings()">
+    <span class="icon">⚙️</span>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<!-- MOBILE FILTER DRAWER SHEET -->
+<div class="mobile-drawer-overlay" id="mobileDrawerOverlay" onclick="closeMobileDrawer(event)">
+  <div class="mobile-drawer" id="mobileDrawer">
+    <div class="modal-handle"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; font-size:17px; font-family:'JetBrains Mono',monospace; color:var(--ink);">Filter Archives</h3>
+      <button class="modal-close-x" onclick="closeMobileDrawerDirect()">✕</button>
+    </div>
+
+    <div class="sec-label">Source</div>
+    <div id="mobileSourceFilters"></div>
+
+    <div class="sec-label">Folders</div>
+    <div id="mobileFolderFilters"></div>
+
+    <div class="sec-label">Tags</div>
+    <div class="tag-cloud" id="mobileTagCloud"></div>
+
+    <div style="margin-top:20px; display:flex; gap:10px;">
+      <button class="clear-filters-btn" style="flex:1;" onclick="clearAllFilters(); closeMobileDrawerDirect();">Clear Filters</button>
+      <button class="btn primary" style="flex:1; justify-content:center;" onclick="closeMobileDrawerDirect()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="overlay" id="addOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modalTitle">
+      <span>Add link</span>
+      <button class="modal-close-x" onclick="closeAdd()">✕</button>
+    </h3>
+    <div class="field">
+      <label>URL</label>
+      <input id="f-url" type="url" placeholder="https://..." autocomplete="off" autocapitalize="none">
+      <div class="err" id="err-url">Enter a valid URL first</div>
+    </div>
+    <div class="field">
+      <label>Title (optional)</label>
+      <input id="f-title" placeholder="Auto-filled from domain if left blank">
+    </div>
+    <div class="field">
+      <label>Folder / Category</label>
+      <input id="f-folder" placeholder="e.g. Tech, Videos, Reads" list="folderList">
+      <datalist id="folderList"></datalist>
+    </div>
+    <div class="field">
+      <label>Tags (comma separated)</label>
+      <input id="f-tags" placeholder="e.g. dev, inspiration, ai">
+    </div>
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea id="f-notes" placeholder="Why you saved this link"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAdd()">Cancel</button>
+      <button class="btn primary" onclick="submitAdd()">Save link</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="overlay" id="bulkOverlay">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-handle"></div>
+    <h3 id="bulkModalTitle">
+      <span>Bulk Import & Link Picker</span>
+      <button class="modal-close-x" onclick="closeBulk()">✕</button>
+    </h3>
+    
+    <!-- Step 1: Text Paste -->
+    <div id="bulkStep1">
+      <div class="field">
+        <label>Paste URLs or raw text dump (from X / Twitter / Web)</label>
+        <textarea id="bulk-text" style="min-height:140px" placeholder="Paste any raw text or links here...
+e.g.
+https://x.com/someone/status/123
+https://github.com/example/repo
+Or paste raw text with multiple URLs!"></textarea>
+        <div class="hint">Format: <code>URL | tags | folder</code> or paste text containing links.</div>
+      </div>
+      <div class="field">
+        <label>Default Folder</label>
+        <input id="bulk-folder" placeholder="Unsorted" list="folderList">
+      </div>
+      <div class="field">
+        <label>Default Tags (comma separated)</label>
+        <input id="bulk-tags" placeholder="e.g. bookmarks, mobile">
+      </div>
+      <div class="err" id="err-bulk">Paste at least one valid URL or text containing links</div>
+      <div class="modal-actions" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <button class="btn" onclick="closeBulk()">Cancel</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" onclick="extractAndPickLinks()">Select Links 🎯</button>
+          <button class="btn primary" onclick="submitBulk()">Import All</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Interactive Checklist Picker -->
+    <div id="bulkStep2" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:12px; color:var(--ink-dim); font-family:'JetBrains Mono',monospace;" id="extractedCount">0 links found</span>
+        <div style="display:flex; gap:6px;">
+          <button class="icon-btn" onclick="toggleAllExtracted(true)">All</button>
+          <button class="icon-btn" onclick="toggleAllExtracted(false)">None</button>
+          <button class="icon-btn" onclick="filterExtractedXOnly()">X Only</button>
+        </div>
+      </div>
+      <div id="extractedList" style="max-height:240px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:10px; background:var(--bg2); margin-bottom:16px; display:flex; flex-direction:column; gap:8px;"></div>
+      <div class="modal-actions" style="justify-content:space-between;">
+        <button class="btn" onclick="backToBulkStep1()">&larr; Back</button>
+        <button class="btn primary" onclick="submitSelectedLinks()">Import Selected 🚀</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings & Cloud Sync Modal -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-handle"></div>
+    <h3>
+      <span>⚙️ Settings & Cloud Sync</span>
+      <button class="modal-close-x" onclick="closeSettings()">✕</button>
+    </h3>
+
+    <!-- Cloud Sync Section -->
+    <div style="background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong style="color:var(--stamp); font-size:14px; font-family:'JetBrains Mono',monospace;">☁️ Supabase Cloud Sync</strong>
+        <span class="sync-badge" id="settingsStatusBadge" style="pointer-events:none;">
+          <span class="sync-dot local" id="settingsStatusDot"></span>
+          <span id="settingsStatusText">Local Mode</span>
+        </span>
+      </div>
+      <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:14px; line-height:1.5;">
+        Sync your links across phone and PC in real time using a 100% free Supabase database.
+      </p>
+
+      <div class="field">
+        <label>Supabase Project URL</label>
+        <input id="cfg-supa-url" placeholder="https://your-project-id.supabase.co" autocomplete="off" autocapitalize="none">
+      </div>
+      <div class="field">
+        <label>Supabase Anon (Public) Key</label>
+        <input id="cfg-supa-key" type="password" placeholder="eyJhbGciOiJIUzI1NiIsIn..." autocomplete="off">
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn primary" style="font-size:12.5px; padding:8px 14px;" onclick="saveAndConnectCloud()">Connect & Sync 🚀</button>
+        <button class="btn" style="font-size:12.5px; padding:8px 14px;" onclick="syncNow()">Force Sync 🔄</button>
+        <button class="btn" style="font-size:12.5px; padding:8px 14px; color:var(--danger);" onclick="disconnectCloud()">Disconnect</button>
+      </div>
+
+      <!-- SQL Script Accordion -->
+      <details style="margin-top:16px;">
+        <summary style="font-size:12px; color:var(--stamp); cursor:pointer; font-family:'JetBrains Mono',monospace;">
+          Need the 1-minute Supabase SQL setup script? (Click here)
+        </summary>
+        <div class="code-box">
+          <button class="code-box-copy" onclick="copySqlScript(this)">Copy SQL</button>
+<pre id="sqlSnippet">-- Run this once in your Supabase SQL Editor:
+create table if not exists public.links (
+  id text primary key,
+  url text not null,
+  title text default '',
+  folder text default 'Unsorted',
+  tags jsonb default '[]'::jsonb,
+  notes text default '',
+  source text default 'web',
+  added bigint default (extract(epoch from now()) * 1000)::bigint,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table public.links enable row level security;
+create policy "Allow access" on public.links for all using (true) with check (true);</pre>
+        </div>
+      </details>
+    </div>
+
+    <!-- Security & PIN Lock Section -->
+    <div style="background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:20px;">
+      <strong style="color:var(--stamp); font-size:14px; font-family:'JetBrains Mono',monospace; display:block; margin-bottom:8px;">
+        🔒 Master PIN Lock
+      </strong>
+      <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:12px;">
+        Protect your vault with a 4-digit PIN on your phone and PC.
+      </p>
+      
+      <div style="display:flex; gap:10px; align-items:center;">
+        <input id="cfg-pin" type="password" maxlength="6" placeholder="Enter 4-digit PIN" style="max-width:160px; background:var(--bg0); font-family:'JetBrains Mono',monospace; letter-spacing:3px;">
+        <button class="btn" onclick="savePinConfig()">Set PIN</button>
+        <button class="btn" style="color:var(--danger);" onclick="removePinConfig()">Disable</button>
+      </div>
+      <div id="pinStatusMsg" style="font-size:12px; color:var(--success); margin-top:8px; display:none;"></div>
+    </div>
+
+    <!-- Backup & Restore -->
+    <div style="background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:16px;">
+      <strong style="color:var(--ink); font-size:13.5px; display:block; margin-bottom:8px;">
+        💾 Data Backup & Restore
+      </strong>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn" onclick="exportBackup()">Export JSON 📤</button>
+        <label class="btn" style="cursor:pointer;">Import JSON 📥 <input type="file" onchange="handleImportFile(event)" accept=".json" style="display:none;"></label>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn primary" onclick="closeSettings()">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'link_vault_data';
+const CONFIG_KEY = 'link_vault_config';
+
+let links = [];
+let activeSource = 'all';
+let activeFolder = 'all';
+let activeTag = null;
+let searchQuery = '';
+let editingId = null;
+
+// Supabase client instance
+let supaClient = null;
+let syncStatus = 'local'; // 'local', 'syncing', 'online', 'error'
+
+// App Configuration (Supabase + PIN)
+let appConfig = {
+  supaUrl: '',
+  supaKey: '',
+  pin: ''
+};
+
+// PIN entry state
+let enteredPin = '';
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function detectSource(url){
+  try{
+    const u = new URL(url);
+    const h = u.hostname.replace('www.','').toLowerCase();
+    const p = u.pathname.toLowerCase();
+    
+    if(h.includes('twitter.com') || h.includes('x.com')) return 'tw';
+    if(h.includes('instagram.com')) return 'ig';
+    if(h.includes('github.com')) return 'gh';
+    if(h.includes('youtube.com') || h.includes('youtu.be')) return 'yt';
+    if(h.includes('linkedin.com')) return 'li';
+    if(h.includes('reddit.com')) return 'rd';
+    if(h.includes('leetcode.com') || h.includes('geeksforgeeks.org') || h.includes('hackerrank.com')) return 'code';
+    if(h.includes('dev.to') || h.includes('medium.com') || h.includes('hashnode.')) return 'blog';
+    if(h.includes('docs.google.com') || h.includes('notion.so') || h.includes('arxiv.org') || p.endsWith('.pdf')) return 'doc';
+    return 'web';
+  }catch(e){ return 'web'; }
+}
+
+const sourceLabel = {
+  tw:'Twitter / X', ig:'Instagram', gh:'GitHub', yt:'YouTube',
+  li:'LinkedIn', rd:'Reddit', code:'LeetCode/Code', blog:'Blog/Article',
+  doc:'Docs/PDF', web:'Web'
+};
+
+function getDomain(url){
+  try{ return new URL(url).hostname; }catch(e){ return ''; }
+}
+
+function hostAndPath(url){
+  try{
+    const u = new URL(url);
+    let p = u.hostname.replace('www.','') + u.pathname;
+    if(p.length > 40) p = p.slice(0,40) + '...';
+    return p;
+  }catch(e){ return url; }
+}
+
+function normalizeUrl(u){
+  u = (u || '').trim();
+  if(!u) return null;
+  if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  try{ new URL(u); return u; }catch(e){ return null; }
+}
+
+// -------------------------------------------------------------
+// CONFIG & STORAGE LOGIC
+// -------------------------------------------------------------
+function loadConfig(){
+  try{
+    const raw = localStorage.getItem(CONFIG_KEY);
+    if(raw) appConfig = { ...appConfig, ...JSON.parse(raw) };
+  }catch(e){}
+  
+  // Update Lock buttons visibility
+  const hasPin = Boolean(appConfig.pin);
+  document.getElementById('desktopLockBtn').style.display = hasPin ? 'flex' : 'none';
+  document.getElementById('mobileLockBtn').style.display = hasPin ? 'inline-flex' : 'none';
+
+  // Check PIN Lock on startup
+  if(hasPin && sessionStorage.getItem('vault_unlocked') !== 'true'){
+    showPinLock();
+  }
+
+  // Initialize Supabase if configured
+  if(appConfig.supaUrl && appConfig.supaKey){
+    initSupabase();
+  } else {
+    updateSyncStatus('local');
+  }
+}
+
+function saveConfig(){
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(appConfig));
+}
+
+function loadLinks(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) links = JSON.parse(raw);
+    else links = [];
+  }catch(e){ links = []; }
+  render();
+}
+
+function saveLinksLocally(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(links));
+  }catch(e){ console.error('Local save error', e); }
+}
+
+// -------------------------------------------------------------
+// SUPABASE CLOUD SYNC
+// -------------------------------------------------------------
+function initSupabase(){
+  try{
+    if(window.supabase && appConfig.supaUrl && appConfig.supaKey){
+      supaClient = window.supabase.createClient(appConfig.supaUrl, appConfig.supaKey);
+      syncNow();
+    } else {
+      updateSyncStatus('local');
+    }
+  }catch(err){
+    console.error('Supabase init failed', err);
+    updateSyncStatus('error');
+  }
+}
+
+async function syncNow(){
+  if(!supaClient){
+    updateSyncStatus('local');
+    return;
+  }
+  updateSyncStatus('syncing');
+  try{
+    const { data, error } = await supaClient
+      .from('links')
+      .select('*')
+      .order('added', { ascending: false });
+
+    if(error) throw error;
+
+    if(data && Array.isArray(data)){
+      if(data.length === 0 && links.length > 0){
+        // Cloud is empty, but local has links - push local to cloud!
+        await pushAllLocalToCloud();
+      } else {
+        // Merge or replace with cloud data
+        links = data.map(item => ({
+          id: item.id,
+          url: item.url,
+          title: item.title || '',
+          folder: item.folder || 'Unsorted',
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          notes: item.notes || '',
+          source: item.source || detectSource(item.url),
+          added: Number(item.added) || Date.now()
+        }));
+        saveLinksLocally();
+        render();
+      }
+      updateSyncStatus('online');
+    }
+  }catch(err){
+    console.error('Sync failed:', err);
+    updateSyncStatus('error');
+  }
+}
+
+async function pushAllLocalToCloud(){
+  if(!supaClient || links.length === 0) return;
+  try{
+    const payload = links.map(l => ({
+      id: l.id,
+      url: l.url,
+      title: l.title || '',
+      folder: l.folder || 'Unsorted',
+      tags: l.tags || [],
+      notes: l.notes || '',
+      source: l.source || detectSource(l.url),
+      added: l.added || Date.now()
+    }));
+    await supaClient.from('links').upsert(payload);
+  }catch(e){
+    console.error('Push to cloud error:', e);
+  }
+}
+
+async function syncSingleLink(linkObj, isDelete = false){
+  saveLinksLocally();
+  render();
+
+  if(!supaClient) return;
+
+  try{
+    updateSyncStatus('syncing');
+    if(isDelete){
+      await supaClient.from('links').delete().eq('id', linkObj.id);
+    } else {
+      await supaClient.from('links').upsert({
+        id: linkObj.id,
+        url: linkObj.url,
+        title: linkObj.title || '',
+        folder: linkObj.folder || 'Unsorted',
+        tags: linkObj.tags || [],
+        notes: linkObj.notes || '',
+        source: linkObj.source || detectSource(linkObj.url),
+        added: linkObj.added || Date.now()
+      });
+    }
+    updateSyncStatus('online');
+  }catch(err){
+    console.error('Sync single item failed', err);
+    updateSyncStatus('error');
+  }
+}
+
+function updateSyncStatus(status){
+  syncStatus = status;
+  const dots = ['desktopSyncDot', 'mobileSyncDot', 'settingsStatusDot'];
+  const texts = ['desktopSyncText', 'mobileSyncText', 'settingsStatusText'];
+
+  const labels = {
+    local: { dot: 'local', text: 'Local' },
+    syncing: { dot: 'syncing', text: 'Syncing...' },
+    online: { dot: 'online', text: 'Cloud Synced' },
+    error: { dot: 'error', text: 'Sync Error' }
+  };
+
+  dots.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.className = 'sync-dot ' + labels[status].dot;
+  });
+
+  texts.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = (id === 'mobileSyncText' && status === 'online') ? 'Synced' : labels[status].text;
+  });
+}
+
+function saveAndConnectCloud(){
+  const url = document.getElementById('cfg-supa-url').value.trim();
+  const key = document.getElementById('cfg-supa-key').value.trim();
+
+  if(!url || !key){
+    alert('Please enter both Supabase URL and Anon Key.');
+    return;
+  }
+  appConfig.supaUrl = url;
+  appConfig.supaKey = key;
+  saveConfig();
+  initSupabase();
+  alert('Connecting to Supabase... Links will sync automatically!');
+}
+
+function disconnectCloud(){
+  if(confirm('Disconnect cloud sync? Your local links will remain intact.')){
+    appConfig.supaUrl = '';
+    appConfig.supaKey = '';
+    saveConfig();
+    supaClient = null;
+    document.getElementById('cfg-supa-url').value = '';
+    document.getElementById('cfg-supa-key').value = '';
+    updateSyncStatus('local');
+    alert('Disconnected from cloud sync.');
+  }
+}
+
+// -------------------------------------------------------------
+// PIN SECURITY SYSTEM
+// -------------------------------------------------------------
+function showPinLock(){
+  enteredPin = '';
+  updatePinDots();
+  document.getElementById('pinErr').textContent = '';
+  document.getElementById('pinOverlay').classList.add('show');
+}
+
+function lockVault(){
+  sessionStorage.removeItem('vault_unlocked');
+  showPinLock();
+}
+
+function pressPin(digit){
+  if(enteredPin.length < 6){
+    enteredPin += digit;
+    updatePinDots();
+    if(enteredPin.length >= 4 && enteredPin === appConfig.pin){
+      unlockVault();
+    } else if(enteredPin.length === (appConfig.pin.length || 4)){
+      // Wrong pin
+      triggerPinError();
+    }
+  }
+}
+
+function backspacePin(){
+  if(enteredPin.length > 0){
+    enteredPin = enteredPin.slice(0, -1);
+    updatePinDots();
+  }
+}
+
+function clearPin(){
+  enteredPin = '';
+  updatePinDots();
+  document.getElementById('pinErr').textContent = '';
+}
+
+function updatePinDots(){
+  const targetLength = appConfig.pin.length || 4;
+  const dotsContainer = document.getElementById('pinDots');
+  dotsContainer.innerHTML = '';
+  for(let i=0; i<targetLength; i++){
+    const dot = document.createElement('div');
+    dot.className = 'pin-dot' + (i < enteredPin.length ? ' filled' : '');
+    dotsContainer.appendChild(dot);
+  }
+}
+
+function triggerPinError(){
+  const box = document.getElementById('pinBox');
+  document.getElementById('pinErr').textContent = 'Incorrect PIN. Try again.';
+  box.classList.add('shake');
+  setTimeout(()=>{
+    box.classList.remove('shake');
+    enteredPin = '';
+    updatePinDots();
+  }, 400);
+}
+
+function unlockVault(){
+  sessionStorage.setItem('vault_unlocked', 'true');
+  document.getElementById('pinOverlay').classList.remove('show');
+}
+
+function savePinConfig(){
+  const p = document.getElementById('cfg-pin').value.trim();
+  if(p.length < 4){
+    alert('PIN must be at least 4 digits.');
+    return;
+  }
+  appConfig.pin = p;
+  saveConfig();
+  document.getElementById('cfg-pin').value = '';
+  document.getElementById('desktopLockBtn').style.display = 'flex';
+  document.getElementById('mobileLockBtn').style.display = 'inline-flex';
+  const msg = document.getElementById('pinStatusMsg');
+  msg.style.display = 'block';
+  msg.textContent = '✅ Master PIN enabled successfully!';
+  setTimeout(()=>msg.style.display='none', 3000);
+}
+
+function removePinConfig(){
+  if(confirm('Disable Master PIN lock?')){
+    appConfig.pin = '';
+    saveConfig();
+    document.getElementById('cfg-pin').value = '';
+    document.getElementById('desktopLockBtn').style.display = 'none';
+    document.getElementById('mobileLockBtn').style.display = 'none';
+    const msg = document.getElementById('pinStatusMsg');
+    msg.style.display = 'block';
+    msg.textContent = 'PIN Lock disabled.';
+    setTimeout(()=>msg.style.display='none', 3000);
+  }
+}
+
+// -------------------------------------------------------------
+// CORE CRUD OPERATIONS
+// -------------------------------------------------------------
+function addOrUpdateLink({url, title, folder, tags, notes}){
+  const clean = normalizeUrl(url);
+  if(!clean) return false;
+  
+  let targetLink = null;
+  if(editingId){
+    const idx = links.findIndex(l => l.id === editingId);
+    if(idx !== -1){
+      links[idx] = {
+        ...links[idx],
+        url: clean,
+        title: (title||'').trim(),
+        folder: (folder||'').trim() || 'Unsorted',
+        tags: (tags||[]).map(t=>t.trim()).filter(Boolean),
+        notes: (notes||'').trim(),
+        source: detectSource(clean)
+      };
+      targetLink = links[idx];
+    }
+  } else {
+    targetLink = {
+      id: uid(),
+      url: clean,
+      title: (title||'').trim(),
+      folder: (folder||'').trim() || 'Unsorted',
+      tags: (tags||[]).map(t=>t.trim()).filter(Boolean),
+      notes: (notes||'').trim(),
+      source: detectSource(clean),
+      added: Date.now()
+    };
+    links.unshift(targetLink);
+  }
+
+  if(targetLink){
+    syncSingleLink(targetLink, false);
+  }
+  return true;
+}
+
+function deleteLink(id){
+  const l = links.find(x=>x.id===id);
+  if(!l) return;
+  if(!confirm(`Delete "${l.title || hostAndPath(l.url)}"?`)) return;
+  links = links.filter(x=>x.id!==id);
+  syncSingleLink(l, true);
+}
+
+function editLink(id){
+  const l = links.find(x=>x.id===id);
+  if(!l) return;
+  editingId = id;
+  document.getElementById('modalTitle').querySelector('span').textContent = 'Edit link';
+  document.getElementById('f-url').value = l.url;
+  document.getElementById('f-title').value = l.title;
+  document.getElementById('f-folder').value = l.folder;
+  document.getElementById('f-tags').value = (l.tags||[]).join(', ');
+  document.getElementById('f-notes').value = l.notes;
+  document.getElementById('addOverlay').classList.add('show');
+}
+
+function copyUrl(url, btnElem){
+  navigator.clipboard.writeText(url).then(()=>{
+    const oldText = btnElem.textContent;
+    btnElem.textContent = 'Copied!';
+    btnElem.classList.add('copied');
+    setTimeout(()=>{
+      btnElem.textContent = oldText;
+      btnElem.classList.remove('copied');
+    }, 1500);
+  }).catch(err=>{
+    console.error('Failed to copy', err);
+  });
+}
+
+// -------------------------------------------------------------
+// FILTERING & NAVIGATION
+// -------------------------------------------------------------
+function setSource(s){ activeSource = s; render(); }
+function setFolder(f){ activeFolder = f; render(); }
+function setTag(t){ activeTag = (activeTag===t) ? null : t; render(); }
+
+function clearAllFilters(){
+  activeSource = 'all';
+  activeFolder = 'all';
+  activeTag = null;
+  searchQuery = '';
+  document.getElementById('searchBox').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  render();
+}
+
+function clearSearch(){
+  searchQuery = '';
+  document.getElementById('searchBox').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  render();
+}
+
+function goToVaultView(){
+  clearAllFilters();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function openMobileDrawer(){
+  document.getElementById('mobileDrawerOverlay').classList.add('show');
+}
+
+function closeMobileDrawer(e){
+  if(e.target.id === 'mobileDrawerOverlay') closeMobileDrawerDirect();
+}
+
+function closeMobileDrawerDirect(){
+  document.getElementById('mobileDrawerOverlay').classList.remove('show');
+}
+
+function matches(l){
+  if(activeSource!=='all' && l.source!==activeSource) return false;
+  if(activeFolder!=='all' && l.folder!==activeFolder) return false;
+  if(activeTag && !(l.tags||[]).includes(activeTag)) return false;
+  if(searchQuery){
+    const hay = ((l.title||'')+' '+l.url+' '+(l.folder||'')+' '+(l.tags||[]).join(' ')+' '+(l.notes||'')).toLowerCase();
+    if(!hay.includes(searchQuery.toLowerCase())) return false;
+  }
+  return true;
+}
+
+// -------------------------------------------------------------
+// RENDERING UI (Desktop & Mobile Synchronized)
+// -------------------------------------------------------------
+function render(){
+  const sourceCounts = {tw:0, ig:0, gh:0, yt:0, li:0, rd:0, code:0, blog:0, doc:0, web:0};
+  const folderCounts = {};
+  const tagSet = new Set();
+
+  links.forEach(l=>{
+    sourceCounts[l.source] = (sourceCounts[l.source]||0)+1;
+    folderCounts[l.folder] = (folderCounts[l.folder]||0)+1;
+    if(Array.isArray(l.tags)) l.tags.forEach(t=>tagSet.add(t));
+  });
+
+  // Render Source Filters (Desktop & Mobile)
+  ['sourceFilters', 'mobileSourceFilters'].forEach(containerId => {
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    el.innerHTML = '';
+    
+    const allItem = document.createElement('div');
+    allItem.className = 'filter-item' + (activeSource==='all'?' active':'');
+    allItem.innerHTML = `<span>All</span><span class="cnt">${links.length}</span>`;
+    allItem.onclick = ()=>{ setSource('all'); if(containerId.includes('mobile')) closeMobileDrawerDirect(); };
+    el.appendChild(allItem);
+
+    Object.keys(sourceLabel).forEach(key=>{
+      if(sourceCounts[key] > 0 || activeSource === key){
+        const item = document.createElement('div');
+        item.className = 'filter-item' + (activeSource===key?' active':'');
+        item.innerHTML = `<span>${sourceLabel[key]}</span><span class="cnt">${sourceCounts[key]||0}</span>`;
+        item.onclick = ()=>{ setSource(key); if(containerId.includes('mobile')) closeMobileDrawerDirect(); };
+        el.appendChild(item);
+      }
+    });
+  });
+
+  // Render Folder Filters (Desktop & Mobile)
+  ['folderFilters', 'mobileFolderFilters'].forEach(containerId => {
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    el.innerHTML = '';
+
+    const allF = document.createElement('div');
+    allF.className = 'filter-item' + (activeFolder==='all'?' active':'');
+    allF.innerHTML = `<span>All</span><span class="cnt">${links.length}</span>`;
+    allF.onclick = ()=>{ setFolder('all'); if(containerId.includes('mobile')) closeMobileDrawerDirect(); };
+    el.appendChild(allF);
+
+    Object.keys(folderCounts).sort().forEach(f=>{
+      const item = document.createElement('div');
+      item.className = 'filter-item' + (activeFolder===f?' active':'');
+      item.innerHTML = `<span>${escapeHtml(f)}</span><span class="cnt">${folderCounts[f]}</span>`;
+      item.onclick = ()=>{ setFolder(f); if(containerId.includes('mobile')) closeMobileDrawerDirect(); };
+      el.appendChild(item);
+    });
+  });
+
+  // Render Tag Cloud (Desktop & Mobile)
+  ['tagCloud', 'mobileTagCloud'].forEach(containerId => {
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    el.innerHTML = '';
+    [...tagSet].sort().forEach(t=>{
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip' + (activeTag===t?' active':'');
+      chip.textContent = '#' + t;
+      chip.onclick = ()=>{ setTag(t); if(containerId.includes('mobile')) closeMobileDrawerDirect(); };
+      el.appendChild(chip);
+    });
+  });
+
+  // Folder Datalist for autocomplete
+  const dl = document.getElementById('folderList');
+  dl.innerHTML = Object.keys(folderCounts).map(f=>`<option value="${escapeHtml(f)}">`).join('');
+
+  // Active filter indicators
+  const isFilterActive = (activeSource !== 'all' || activeFolder !== 'all' || activeTag !== null || searchQuery !== '');
+  document.getElementById('clearFiltersWrap').style.display = isFilterActive ? 'block' : 'none';
+  document.getElementById('mobileFilterDot').className = 'nav-dot' + (isFilterActive ? ' show' : '');
+
+  const filtered = links.filter(matches);
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  document.getElementById('emptyState').style.display = filtered.length ? 'none' : 'block';
+  
+  const titleText = activeSource !== 'all' ? sourceLabel[activeSource] : (activeFolder !== 'all' ? `Folder: ${activeFolder}` : (activeTag ? `Tag: #${activeTag}` : 'All Archives'));
+  document.getElementById('dashboardTitle').textContent = titleText;
+  
+  document.getElementById('statRow').textContent =
+    links.length ? `Showing ${filtered.length} of ${links.length} saved links` : '';
+
+  // Render Cards
+  filtered.forEach(l=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    const displayTitle = l.title || hostAndPath(l.url);
+    const domain = getDomain(l.url);
+    const faviconUrl = domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32` : '';
+    
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="badge ${l.source}">${sourceLabel[l.source] || 'Web'}</span>
+        <div class="card-actions">
+          <button class="icon-btn" title="Copy URL" onclick="copyUrl('${escapeHtml(l.url)}', this)">Copy 📋</button>
+          <button class="icon-btn" title="Edit Link" onclick="editLink('${l.id}')">✏️</button>
+          <button class="icon-btn del" title="Delete Link" onclick="deleteLink('${l.id}')">🗑️</button>
+        </div>
+      </div>
+      <div class="card-title-wrap">
+        ${faviconUrl ? `<img class="favicon" src="${faviconUrl}" onerror="this.style.display='none'">` : ''}
+        <h4 class="card-title">${escapeHtml(displayTitle)}</h4>
+      </div>
+      <div class="card-url-wrap">
+        <a class="card-url" href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(hostAndPath(l.url))} &rarr;</a>
+      </div>
+      ${l.notes ? `<div class="card-notes">${escapeHtml(l.notes)}</div>` : ''}
+      <div class="card-meta">
+        <span class="pill folder">📁 ${escapeHtml(l.folder || 'Unsorted')}</span>
+        ${(l.tags||[]).map(t=>`<span class="pill">#${escapeHtml(t)}</span>`).join('')}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function escapeHtml(s){
+  if(!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// -------------------------------------------------------------
+// MODALS LOGIC (Add, Bulk, Settings)
+// -------------------------------------------------------------
+function openAdd(){
+  editingId = null;
+  document.getElementById('modalTitle').querySelector('span').textContent = 'Add link';
+  document.getElementById('addOverlay').classList.add('show');
+  setTimeout(()=>document.getElementById('f-url').focus(), 150);
+}
+
+function closeAdd(){
+  editingId = null;
+  document.getElementById('addOverlay').classList.remove('show');
+  ['f-url','f-title','f-folder','f-tags','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('err-url').classList.remove('show');
+}
+
+function submitAdd(){
+  const url = document.getElementById('f-url').value;
+  if(!normalizeUrl(url)){ document.getElementById('err-url').classList.add('show'); return; }
+  document.getElementById('err-url').classList.remove('show');
+  
+  addOrUpdateLink({
+    url,
+    title: document.getElementById('f-title').value,
+    folder: document.getElementById('f-folder').value,
+    tags: document.getElementById('f-tags').value.split(','),
+    notes: document.getElementById('f-notes').value
+  });
+  closeAdd();
+}
+
+// Bulk Import
+let extractedItems = [];
+
+function openBulk(){
+  backToBulkStep1();
+  document.getElementById('bulkOverlay').classList.add('show');
+}
+
+function closeBulk(){
+  document.getElementById('bulkOverlay').classList.remove('show');
+  document.getElementById('bulk-text').value = '';
+  document.getElementById('bulk-folder').value = '';
+  document.getElementById('bulk-tags').value = '';
+  document.getElementById('err-bulk').classList.remove('show');
+  backToBulkStep1();
+}
+
+function backToBulkStep1(){
+  document.getElementById('bulkStep1').style.display = 'block';
+  document.getElementById('bulkStep2').style.display = 'none';
+  document.getElementById('bulkModalTitle').querySelector('span').textContent = 'Bulk Import & Link Picker';
+}
+
+function extractAndPickLinks(){
+  const rawText = document.getElementById('bulk-text').value;
+  const matches = rawText.match(/(https?:\/\/[^\s"'<>\(\)]+)/gi) || [];
+  const defaultFolder = (document.getElementById('bulk-folder').value || '').trim() || 'Unsorted';
+  const defaultTags = (document.getElementById('bulk-tags').value || '').split(',').map(t=>t.trim()).filter(Boolean);
+
+  const urlMap = new Map();
+  matches.forEach(m => {
+    const clean = normalizeUrl(m);
+    if(clean && !urlMap.has(clean)){
+      urlMap.set(clean, {
+        url: clean,
+        source: detectSource(clean),
+        folder: defaultFolder,
+        tags: [...defaultTags],
+        checked: true
+      });
+    }
+  });
+
+  extractedItems = Array.from(urlMap.values());
+
+  if(extractedItems.length === 0){
+    document.getElementById('err-bulk').classList.add('show');
+    return;
+  }
+  document.getElementById('err-bulk').classList.remove('show');
+
+  renderExtractedChecklist();
+  document.getElementById('bulkStep1').style.display = 'none';
+  document.getElementById('bulkStep2').style.display = 'block';
+  document.getElementById('bulkModalTitle').querySelector('span').textContent = `Select Links (${extractedItems.length} Found)`;
+}
+
+function renderExtractedChecklist(){
+  const container = document.getElementById('extractedList');
+  container.innerHTML = '';
+  document.getElementById('extractedCount').textContent = `${extractedItems.length} extracted link(s)`;
+
+  extractedItems.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border-radius:8px; background:var(--bg1); border:1px solid var(--line); font-size:12px;';
+    
+    div.innerHTML = `
+      <label style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer; overflow:hidden;">
+        <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="extractedItems[${idx}].checked = this.checked; updateSelectedCount();">
+        <span class="badge ${item.source}">${sourceLabel[item.source] || 'Web'}</span>
+        <span style="font-family:'JetBrains Mono',monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink);">${escapeHtml(hostAndPath(item.url))}</span>
+      </label>
+      <a href="${escapeHtml(item.url)}" target="_blank" style="color:var(--stamp); font-size:11px; text-decoration:none;">view &rarr;</a>
+    `;
+    container.appendChild(div);
+  });
+  updateSelectedCount();
+}
+
+function toggleAllExtracted(val){
+  extractedItems.forEach(item => item.checked = val);
+  renderExtractedChecklist();
+}
+
+function filterExtractedXOnly(){
+  extractedItems.forEach(item => item.checked = (item.source === 'tw'));
+  renderExtractedChecklist();
+}
+
+function updateSelectedCount(){
+  const selectedCount = extractedItems.filter(i => i.checked).length;
+  document.getElementById('extractedCount').textContent = `${selectedCount} of ${extractedItems.length} selected`;
+}
+
+function submitSelectedLinks(){
+  const selected = extractedItems.filter(i => i.checked);
+  if(selected.length === 0){
+    alert('Please select at least one link to import!');
+    return;
+  }
+  let count = 0;
+  selected.forEach(item => {
+    if(addOrUpdateLink({
+      url: item.url,
+      title: '',
+      folder: item.folder,
+      tags: item.tags,
+      notes: ''
+    })) count++;
+  });
+  closeBulk();
+  alert(`✅ Successfully imported ${count} link(s)!`);
+}
+
+function submitBulk(){
+  const rawText = document.getElementById('bulk-text').value;
+  const lines = rawText.split('\n').map(l=>l.trim()).filter(Boolean);
+  const defaultFolder = (document.getElementById('bulk-folder').value || '').trim() || 'Unsorted';
+  const defaultTags = (document.getElementById('bulk-tags').value || '').split(',').map(t=>t.trim()).filter(Boolean);
+  
+  let count = 0;
+  lines.forEach(line => {
+    const parts = line.split('|').map(p=>p.trim());
+    const rawUrl = parts[0];
+    const lineTags = parts[1] ? parts[1].split(',').map(t=>t.trim()).filter(Boolean) : defaultTags;
+    const folder = parts[2] || defaultFolder;
+
+    const matches = rawUrl.match(/(https?:\/\/[^\s"'<>\(\)]+)/gi) || [rawUrl];
+    matches.forEach(m => {
+      const clean = normalizeUrl(m);
+      if(clean){
+        if(addOrUpdateLink({
+          url: clean,
+          title: '',
+          folder: folder,
+          tags: lineTags,
+          notes: ''
+        })) count++;
+      }
+    });
+  });
+
+  if(count === 0){
+    document.getElementById('err-bulk').classList.add('show');
+    return;
+  }
+  document.getElementById('err-bulk').classList.remove('show');
+  closeBulk();
+  alert(`✅ Successfully imported ${count} link(s)!`);
+}
+
+// Settings Modal
+function openSettings(){
+  document.getElementById('cfg-supa-url').value = appConfig.supaUrl || '';
+  document.getElementById('cfg-supa-key').value = appConfig.supaKey || '';
+  updateSyncStatus(syncStatus);
+  document.getElementById('settingsOverlay').classList.add('show');
+}
+
+function closeSettings(){
+  document.getElementById('settingsOverlay').classList.remove('show');
+}
+
+function copySqlScript(btn){
+  const sql = document.getElementById('sqlSnippet').textContent;
+  navigator.clipboard.writeText(sql).then(()=>{
+    const old = btn.textContent;
+    btn.textContent = 'Copied! ✅';
+    setTimeout(()=>btn.textContent=old, 1500);
+  });
+}
+
+// Backup / Restore
+function exportBackup(){
+  const data = { links, exportDate: new Date().toISOString(), version: 'vault_cloud_v2' };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `vault_backup_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function handleImportFile(ev){
+  if(ev.target.files && ev.target.files[0]){
+    importBackup(ev.target.files[0]);
+    ev.target.value = '';
+  }
+}
+
+function importBackup(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    try{
+      const data = JSON.parse(ev.target.result);
+      let importedLinks = null;
+      if(data && typeof data === 'object'){
+        if(Array.isArray(data.links)) importedLinks = data.links;
+        else if(Array.isArray(data)) importedLinks = data;
+      }
+      
+      if(Array.isArray(importedLinks)){
+        if(confirm(`Importing backup will restore ${importedLinks.length} links. Proceed?`)){
+          links = importedLinks;
+          saveLinksLocally();
+          render();
+          if(supaClient){
+            await pushAllLocalToCloud();
+          }
+          alert(`✅ Successfully imported ${links.length} links!`);
+        }
+      } else {
+        alert('❌ Invalid backup file format. Expected JSON backup.');
+      }
+    }catch(err){
+      alert('❌ Error parsing backup JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// -------------------------------------------------------------
+// EVENT LISTENERS & SHORTCUTS
+// -------------------------------------------------------------
+document.getElementById('addBtn').onclick = openAdd;
+document.getElementById('bulkBtn').onclick = openBulk;
+document.getElementById('exportBtn').onclick = exportBackup;
+document.getElementById('clearFiltersBtn').onclick = clearAllFilters;
+
+document.getElementById('importFile').addEventListener('change', handleImportFile);
+
+document.getElementById('searchBox').oninput = (e)=>{
+  searchQuery = e.target.value;
+  document.getElementById('searchClear').style.display = searchQuery ? 'block' : 'none';
+  render();
+};
+
+document.getElementById('addOverlay').onclick = (e)=>{ if(e.target.id==='addOverlay') closeAdd(); };
+document.getElementById('bulkOverlay').onclick = (e)=>{ if(e.target.id==='bulkOverlay') closeBulk(); };
+document.getElementById('settingsOverlay').onclick = (e)=>{ if(e.target.id==='settingsOverlay') closeSettings(); };
+
+document.addEventListener('keydown', (e) => {
+  // If PIN lock is active, handle numeric keypad
+  if(document.getElementById('pinOverlay').classList.contains('show')){
+    if(e.key >= '0' && e.key <= '9') pressPin(e.key);
+    else if(e.key === 'Backspace') backspacePin();
+    else if(e.key === 'Escape') clearPin();
+    return;
+  }
+
+  // Global search shortcut
+  if((e.key === '/' || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA'){
+    e.preventDefault();
+    document.getElementById('searchBox').focus();
+  }
+  if(e.key === 'Escape'){
+    closeAdd();
+    closeBulk();
+    closeSettings();
+    closeMobileDrawerDirect();
+  }
+});
+
+// Register PWA Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration skipped', err));
+  });
+}
+
+// Initialize Application
+loadConfig();
+loadLinks();
+</script>
+</body>
+</html>
